@@ -1,0 +1,55 @@
+name: Python CI with Allure Report
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: Linux-Medium  # Указываем тип runner (в данном случае Linux-Medium)
+
+    steps:
+      # Шаг 1: Проверка кода и настройка окружения
+      - name: Checkout code
+        uses: actions/checkout@v3  # Клонируем репозиторий
+
+      # Шаг 2: Установка Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Указываем версию Python
+
+      # Шаг 3: Установка зависимостей
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest allure-pytest  # Устанавливаем pytest и allure-pytest
+
+      # Шаг 4: Запуск тестов с генерацией результатов для Allure
+      - name: Run tests
+        run: |
+          pytest --alluredir=./allure-results  # Запуск тестов и сохранение результатов
+
+      # Шаг 5: Генерация отчета Allure
+      - name: Generate Allure report
+        run: |
+          allure generate ./allure-results -o ./allure-report --clean  # Генерация отчета
+
+      # Шаг 6: Публикация отчета Allure как артефакт
+      - name: Upload Allure report as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: ./allure-report
+
+      # Шаг 7: Публикация результатов тестов (опционально)
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: ./allure-results
